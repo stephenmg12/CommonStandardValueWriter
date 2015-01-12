@@ -17,21 +17,72 @@ require_once "../vendor/autoload.php";
  * Class CommonStandardValueWriter
  * @package CommonStandardValueWriter
  */
-class CommonStandardValueWriter {
+class CommonStandardValueWriter
+{
     /**
      * @var
      */
     protected $fileHandle;
+    /**
+     * @var
+     */
     protected $filePath;
+    /**
+     * @var
+     */
     protected $csvArray;
+    /**
+     * @var
+     */
     protected $fpn;
+    /**
+     * @var string
+     */
+    protected $csvEOL = '\n';
+    /**
+     * @var string
+     */
+    protected $csvDelimiter = ',';
+    protected $csvWriteMethod = 'truncate';
 
     public function __construct($filePath)
     {
-        if(!empty($filePath)) {
+        if (!empty($filePath)) {
             $this->setPath($filePath);
         }
 
+    }
+
+    /**
+     * @return string
+     */
+    public function getCsvWriteMethod()
+    {
+        return $this->csvWriteMethod;
+    }
+
+    /**
+     * @param string $csvWriteMethod
+     */
+    public function setCsvWriteMethod($csvWriteMethod)
+    {
+        $this->csvWriteMethod = $csvWriteMethod;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getFilePath()
+    {
+        return $this->filePath;
+    }
+
+    /**
+     * @param mixed $filePath
+     */
+    public function setFilePath($filePath)
+    {
+        $this->filePath = $filePath;
     }
 
     /**
@@ -46,13 +97,50 @@ class CommonStandardValueWriter {
         return $this;
     }
 
-    public function setHeader($header=[])
+    /**
+     * @return string
+     */
+    public function getCsvDelimiter()
     {
-        if(is_array($header)) {
-            $this->header = $header;
-            return $this;
+        return $this->csvDelimiter;
+    }
+
+    /**
+     * @param string $csvDelimiter
+     */
+    public function setCsvDelimiter($csvDelimiter)
+    {
+        $this->csvDelimiter = $csvDelimiter;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCsvEOL()
+    {
+        return $this->csvEOL;
+    }
+
+    /**
+     * @param string $csvEOL
+     */
+    public function setCsvEOL($csvEOL)
+    {
+        $this->csvEOL = $csvEOL;
+    }
+
+    /**
+     * @param array $header
+     * @return $this
+     * @throws \InvalidArgumentException
+     */
+    public function setHeader($header = [])
+    {
+        if (!is_array($header)) {
+            throw new \InvalidArgumentException("CommonStandardValueWriter::setHeader only accepts Arrays");
         }
-        throw new \InvalidArgumentException("CommonStandardValueWriter::setHeader only accepts Arrays");
+        $this->header = $header;
+        return $this;
     }
 
     /**
@@ -61,13 +149,13 @@ class CommonStandardValueWriter {
      * @return $this
      * @throws \InvalidArgumentException
      */
-    public function addLine($newLine=[])
+    public function addLine($newLine = [])
     {
-        if(is_array($newLine)) {
-            if($this->is_assoc($newLine)) {
+        if (is_array($newLine)) {
+            if ($this->is_assoc($newLine)) {
                 $tempLine = [];
-                foreach($newLine as $key => $value) {
-                    $tempLine[]=$value;
+                foreach ($newLine as $key => $value) {
+                    $tempLine[] = $value;
                 }
                 $this->csvArray[] = $tempLine;
             } else {
@@ -78,11 +166,43 @@ class CommonStandardValueWriter {
         throw new \InvalidArgumentException("CommonStandardValueWriter::addLine only accepts Arrays");
     }
 
-    public function commit() {
-     return $this;
+    /**
+     * @return $this
+     */
+    public function commit()
+    {
+        $fileHandle = $this->getFileHandle();
+        if (empty($fileHandle)) {
+            if ($this->getCsvWriteMethod() == 'append') {
+                $path = $this->getFilePath();
+                $fileHandle = fopen($path, 'a+');
+            }
+        }
+        return $this;
     }
 
-    protected function is_assoc($array){
+    /**
+     * @return mixed
+     */
+    protected function getFileHandle()
+    {
+        return $this->fileHandle;
+    }
+
+    /**
+     * @param mixed $fileHandle
+     */
+    public function setFileHandle($fileHandle)
+    {
+        $this->fileHandle = $fileHandle;
+    }
+
+    /**
+     * @param $array
+     * @return bool
+     */
+    protected function is_assoc($array)
+    {
         return (array_values($array) !== $array);
     }
 }
