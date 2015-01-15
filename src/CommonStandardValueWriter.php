@@ -43,7 +43,9 @@ class CommonStandardValueWriter
      * @var string
      */
     protected $csvDelimiter = ',';
-    protected $csvWriteMethod = 'truncate';
+    protected $csvWriteMethod = 'truncate'; //set to append or truncate
+    protected $csvRecordQuoteMethod = 'quote_string'; //Set to quote_all, quote_none, or quote_string (default)
+    protected $csvRecordCount = 0;
 
     public function __construct($filePath)
     {
@@ -173,12 +175,48 @@ class CommonStandardValueWriter
     {
         $fileHandle = $this->getFileHandle();
         if (empty($fileHandle)) {
+            $path = $this->getFilePath();
             if ($this->getCsvWriteMethod() == 'append') {
-                $path = $this->getFilePath();
                 $fileHandle = fopen($path, 'a+');
+            } else {
+                $fileHandle = fopen($path, 'w+');
             }
         }
+
+        foreach ($this->csvArray as $line) {
+            $tempLine = '';
+            if ($this->csvRecordQuoteMethod = 'quote_none') {
+                $tempLine = $this->csvQuoteNone($line);
+            } elseif ($this->csvRecordQuoteMethod = 'quote_all') {
+                $tempLine = $this->csvQuoteAll($line);
+            }
+            fwrite($fileHandle, $tempLine);
+        }
         return $this;
+    }
+
+    /**
+     * @param array $line
+     * @return string
+     */
+    protected function csvQuoteNone($line = array())
+    {
+        if (!is_array($line)) {
+            throw new \InvalidArgumentException("CommonStandardValueWriter::csvQuoteNone only accepts Arrays");
+        }
+        return implode($this->csvDelimiter, $line) . $this->csvDelimiter . $this->csvEOL;
+    }
+
+    /**
+     * @param array $line
+     * @return string
+     */
+    protected function csvQuoteAll($line = array())
+    {
+        if (!is_array($line)) {
+            throw new \InvalidArgumentException("CommonStandardValueWriter::csvQuoteNone only accepts Arrays");
+        }
+        return '"' . implode('"' . $this->csvDelimiter . '"', $line) . '"' . $this->csvDelimiter . $this->csvEOL;
     }
 
     /**
