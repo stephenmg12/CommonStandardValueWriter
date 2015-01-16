@@ -1,9 +1,32 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: stepheng
- * Date: 1/9/2015
- * Time: 12:03 PM
+ * Contains CommonStandardValueWriter.
+ *
+ * PHP version 5.4
+ *
+ * LICENSE:
+ * This file is part of CommonStandardValueWriter - A better PHP CSV Writer Class for PHP.
+ * One of the main goals is to be more flexible then built-in function is PHP
+ * Copyright (C) 2014 Michael Cummings
+ *
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * You should be able to find a copy of this license in the LICENSE file.
+ *
+ * @copyright 2015 Stephen Gulick
+ * @license   http://www.gnu.org/licenses/gpl-2.0.html GNU GPLv2
+ * @author    Stephen Gulick <stephenmg12@gmail.com>
  */
 
 
@@ -11,7 +34,7 @@ namespace CommonStandardValueWriter;
 
 use FilePathNormalizer\FilePathNormalizer;
 
-require_once "../vendor/autoload.php";
+require_once "../bootstrap.php";
 
 /**
  * Class CommonStandardValueWriter
@@ -58,6 +81,12 @@ class CommonStandardValueWriter
     protected $csvRecordCount = 0;
 
     protected $listDelimiter = ' ';
+
+    protected $writeHeader = true;
+
+    protected $headerQuoteMethod = 'quote_string';
+
+    protected $headerArray = array();
 
     public function __construct($filePath)
     {
