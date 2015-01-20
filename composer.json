@@ -1,5 +1,5 @@
 {
-  "name": "stephenmg12/CommonStandardValueWriter",
+  "name": "stephenmg12/common-standard-value-writer",
   "description": "A better PHP CSV Writer",
   "minimum-stability": "stable",
   "license": "GPL-2.0",
