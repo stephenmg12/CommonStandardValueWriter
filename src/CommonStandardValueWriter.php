@@ -27,7 +27,7 @@ namespace CommonStandardValueWriter;
 
 use FilePathNormalizer\FilePathNormalizer;
 
-require_once "../bootstrap.php";
+require_once dirname(__DIR__)."/bootstrap.php";
 
 /**
  * Class CommonStandardValueWriter
