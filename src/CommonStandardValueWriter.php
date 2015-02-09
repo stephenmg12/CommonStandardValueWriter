@@ -5,7 +5,7 @@
  * LICENSE:
  * This file is part of CommonStandardValueWriter - A better PHP CSV Writer Class for PHP.
  * One of the main goals is to be more flexible then built-in function is PHP
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Stephen Gulick
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation, version 2 of the License.
@@ -17,193 +17,48 @@
  * this program. If not, see
  * <http://www.gnu.org/licenses/>.
  * You should be able to find a copy of this license in the LICENSE file.
- * @copyright 2015 Stephen Gulick
+ * @copyright 2014-2015 Stephen Gulick
  * @license   http://www.gnu.org/licenses/gpl-2.0.html GNU GPLv2
  * @author    Stephen Gulick <stephenmg12@gmail.com>
  */
-
-
 namespace CommonStandardValueWriter;
 
 use FilePathNormalizer\FilePathNormalizer;
 
-require_once dirname(__DIR__)."/bootstrap.php";
-
+require_once dirname(__DIR__) . '/bootstrap.php';
 /**
  * Class CommonStandardValueWriter
- * @package CommonStandardValueWriter
  */
 class CommonStandardValueWriter
 {
     /**
-     * @var
+     * @param string             $filePath
+     * @param FilePathNormalizer $fpn
      */
-    protected $fileHandle;
-    /**
-     * @var
-     */
-    protected $filePath;
-    /**
-     * @var
-     */
-    protected $csvArray;
-    /**
-     * @var
-     */
-    protected $fpn;
-    /**
-     * @var string
-     */
-    protected $csvEOL = '\n';
-    /**
-     * @var string
-     */
-    protected $csvDelimiter = ',';
-    /**
-     * @var string
-     */
-    protected $csvWriteMethod = 'truncate'; //set to append or truncate
-    /**
-     * @var string
-     */
-    protected $csvRecordQuoteMethod = 'quote_string'; //Set to quote_all, quote_none, or quote_string (default)
-
-    /**
-     * @var int
-     */
-    protected $csvRecordCount = 0;
-
-    protected $listDelimiter = ' ';
-
-    protected $writeHeader = true;
-
-    protected $headerQuoteMethod = 'quote_string';
-
-    protected $headerArray = [];
-
-    public function __construct($filePath)
+    public function __construct($filePath, FilePathNormalizer $fpn = null)
     {
-        if (!empty($filePath)) {
-            $this->setPath($filePath);
-        }
-
+        $this->setPath($filePath);
+        $this->setFpn($fpn);
     }
-
-    /**
-     * @return string
-     */
-    public function getCsvWriteMethod()
-    {
-        return $this->csvWriteMethod;
-    }
-
-    /**
-     * @param string $csvWriteMethod
-     */
-    public function setCsvWriteMethod($csvWriteMethod)
-    {
-        $this->csvWriteMethod = $csvWriteMethod;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getFilePath()
-    {
-        return $this->filePath;
-    }
-
-    /**
-     * @param mixed $filePath
-     */
-    public function setFilePath($filePath)
-    {
-        $this->filePath = $filePath;
-    }
-
-    /**
-     * @param string $filePath
-     *
-*@return $this
-     * @throws \InvalidArgumentException
-     */
-    public function setPath($filePath)
-    {
-        $this->fpn = new FilePathNormalizer();
-        $this->filePath = $this->fpn->normalizeFile($filePath);
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getCsvDelimiter()
-    {
-        return $this->csvDelimiter;
-    }
-
-    /**
-     * @param string $csvDelimiter
-     */
-    public function setCsvDelimiter($csvDelimiter)
-    {
-        $this->csvDelimiter = $csvDelimiter;
-    }
-
-    /**
-     * @return string
-     */
-    public function getCsvEOL()
-    {
-        return $this->csvEOL;
-    }
-
-    /**
-     * @param string $csvEOL
-     */
-    public function setCsvEOL($csvEOL)
-    {
-        $this->csvEOL = $csvEOL;
-    }
-
-    /**
-     * @param array $header
-     *
-*@return $this
-     * @throws \InvalidArgumentException
-     */
-    public function setHeaderArray($header = [])
-    {
-        if (!is_array($header)) {
-            throw new \InvalidArgumentException("CommonStandardValueWriter::setHeader only accepts Arrays");
-        }
-        $this->headerArray = $header;
-        return $this;
-    }
-
     /**
      * @param array $newLine
      *
      * @return $this
      * @throws \InvalidArgumentException
      */
-    public function addLine($newLine = [])
+    public function addLine(array $newLine = [])
     {
-        if (is_array($newLine)) {
-            if ($this->is_assoc($newLine)) {
-                $tempLine = [];
-                foreach ($newLine as $key => $value) {
-                    $tempLine[] = $value;
-                }
-                $this->csvArray[] = $tempLine;
-            } else {
-                $this->csvArray[] = $newLine;
+        if ($this->is_assoc($newLine)) {
+            $tempLine = [];
+            foreach ($newLine as $key => $value) {
+                $tempLine[] = $value;
             }
-            return $this;
+            $this->csvArray[] = $tempLine;
+        } else {
+            $this->csvArray[] = $newLine;
         }
-        throw new \InvalidArgumentException("CommonStandardValueWriter::addLine only accepts Arrays");
+        return $this;
     }
-
     /**
      * @return $this
      */
@@ -212,40 +67,90 @@ class CommonStandardValueWriter
         $fileHandle = $this->getFileHandle();
         if (!is_resource($fileHandle)) {
             $path = $this->getFilePath();
-            if ($this->getCsvWriteMethod() == 'append') {
-                $fileHandle = fopen($path, 'ab+');
-            } else {
-                $fileHandle = fopen($path, 'w+');
-            }
+            $fileHandle = 'append' === $this->getCsvWriteMethod() ? fopen($path, 'ab+') : fopen($path, 'wb+');
         }
-        if (!empty($this->headerQuoteMethod) && $this->writeHeader == true) {
-            if ($this->headerQuoteMethod == 'quote_none') {
+        if ('' !== $this->headerQuoteMethod && true === $this->writeHeader) {
+            if ('quote_none' === $this->headerQuoteMethod) {
                 $tempLine = $this->lineArrayToString($this->quoteNone($this->headerArray));
-            } elseif ($this->headerQuoteMethod = 'quote_all') {
+            } elseif ('quote_all' === $this->headerQuoteMethod) {
                 $tempLine = $this->lineArrayToString($this->quoteAll($this->headerArray));
-            } elseif ($this->headerQuoteMethod == 'quote_string') {
+            } elseif ('quote_string' === $this->headerQuoteMethod) {
                 $tempLine = $this->lineArrayToString($this->quoteString($this->headerArray));
             } else {
-                throw new \DomainException("CommonStandardValueWriter::commit valid options are quote_all, quote_none, or quote_string");
+                throw new \DomainException('CommonStandardValueWriter::commit valid options are quote_all, quote_none, or quote_string');
             }
             fwrite($fileHandle, $tempLine);
         }
-
         foreach ($this->csvArray as $line) {
-            if ($this->csvRecordQuoteMethod == 'quote_none') {
+            if ('quote_none' === $this->csvRecordQuoteMethod) {
                 $tempLine = $this->lineArrayToString($this->quoteNone($line));
-            } elseif ($this->csvRecordQuoteMethod = 'quote_all') {
+            } elseif ('quote_all' === $this->csvRecordQuoteMethod) {
                 $tempLine = $this->lineArrayToString($this->quoteAll($line));
-            } elseif ($this->csvRecordQuoteMethod == 'quote_string') {
+            } elseif ('quote_string' === $this->csvRecordQuoteMethod) {
                 $tempLine = $this->lineArrayToString($this->quoteString($line));
             } else {
-                throw new \DomainException("CommonStandardValueWriter::csvQuoteNone only accepts Arrays");
+                throw new \DomainException('CommonStandardValueWriter::csvQuoteNone only accepts Arrays');
             }
             fwrite($fileHandle, $tempLine);
         }
         return $this;
     }
-
+    /**
+     * @return string
+     */
+    public function getCsvDelimiter()
+    {
+        return $this->csvDelimiter;
+    }
+    /**
+     * @return string
+     */
+    public function getCsvEOL()
+    {
+        return $this->csvEOL;
+    }
+    /**
+     * @return string
+     */
+    public function getCsvWriteMethod()
+    {
+        return $this->csvWriteMethod;
+    }
+    /**
+     * @return string
+     */
+    public function getFilePath()
+    {
+        return $this->filePath;
+    }
+    /**
+     * @return FilePathNormalizer
+     */
+    public function getFpn()
+    {
+        return $this->fpn;
+    }
+    /**
+     * @param string $csvDelimiter
+     */
+    public function setCsvDelimiter($csvDelimiter)
+    {
+        $this->csvDelimiter = $csvDelimiter;
+    }
+    /**
+     * @param string $csvEOL
+     */
+    public function setCsvEOL($csvEOL)
+    {
+        $this->csvEOL = $csvEOL;
+    }
+    /**
+     * @param string $csvWriteMethod
+     */
+    public function setCsvWriteMethod($csvWriteMethod)
+    {
+        $this->csvWriteMethod = (string)$csvWriteMethod;
+    }
     /**
      * @param mixed $fileHandle
      */
@@ -253,30 +158,80 @@ class CommonStandardValueWriter
     {
         $this->fileHandle = $fileHandle;
     }
-
+    /**
+     * @param string $filePath
+     */
+    public function setFilePath($filePath)
+    {
+        $this->filePath = (string)$filePath;
+    }
+    /**
+     * @param FilePathNormalizer $value
+     *
+     * @return self
+     */
+    public function setFpn($value = null)
+    {
+        if (null === $value) {
+            $this->fpn = new FilePathNormalizer();
+        }
+        $this->fpn = $value;
+        return $this;
+    }
+    /**
+     * @param array $header
+     *
+     * @return $this
+     * @throws \InvalidArgumentException
+     */
+    public function setHeaderArray(array $header = [])
+    {
+        $this->headerArray = $header;
+        return $this;
+    }
+    /**
+     * @param string $filePath
+     *
+     * @return $this
+     * @throws \InvalidArgumentException
+     */
+    public function setPath($filePath)
+    {
+        $this->filePath = $this->fpn->normalizeFile($filePath);
+        return $this;
+    }
+    /**
+     * @return mixed
+     */
+    protected function getFileHandle()
+    {
+        return $this->fileHandle;
+    }
+    /**
+     * @param $array
+     *
+     * @return bool
+     */
+    protected function is_assoc($array)
+    {
+        return (array_values($array) !== $array);
+    }
     /**
      * @param array $line
      *
-*@return array
+     * @return string
      */
-    protected function quoteNone($line = [])
+    protected function lineArrayToString(array $line = [])
     {
-        if (!is_array($line)) {
-            throw new \InvalidArgumentException("CommonStandardValueWriter::csvQuoteNone only accepts Arrays");
-        }
-        return $line;
+        return implode($this->csvDelimiter, $line) . $this->csvEOL;
     }
-
     /**
      * @param array $line
      *
      * @return array
      */
-    protected function quoteAll($line = [])
+    protected function quoteAll(array $line = [])
     {
-        if (!is_array($line)) {
-            throw new \InvalidArgumentException("CommonStandardValueWriter::csvQuoteNone only accepts Arrays");
-        }
         $tempLine = [];
         foreach ($line as $value) {
             if (is_array($value)) {
@@ -286,17 +241,22 @@ class CommonStandardValueWriter
         }
         return $tempLine;
     }
-
     /**
      * @param array $line
      *
      * @return array
      */
-    protected function quoteString($line = [])
+    protected function quoteNone(array $line = [])
     {
-        if (!is_array($line)) {
-            throw new \InvalidArgumentException("CommonStandardValueWriter::csvQuoteNone only accepts Arrays");
-        }
+        return $line;
+    }
+    /**
+     * @param array $line
+     *
+     * @return array
+     */
+    protected function quoteString(array $line = [])
+    {
         $tempLine = [];
         foreach ($line as $value) {
             if (is_numeric($value)) {
@@ -308,37 +268,59 @@ class CommonStandardValueWriter
             }
         }
         return $tempLine;
-
     }
-
     /**
-     * @param array $line
+     * @var array $csvArray
+     */
+    protected $csvArray;
+    /**
+     * @var string $csvDelimiter
+     */
+    protected $csvDelimiter = ',';
+    /**
+     * @var string $csvEOL
+     */
+    protected $csvEOL = '\n';
+    /**
+     * @var int $csvRecordCount
+     */
+    protected $csvRecordCount = 0;
+    /**
+     * Set to quote_all, quote_none, or quote_string (default).
      *
-     * @return string
+     * @var string $csvRecordQuoteMethod
      */
-    protected function lineArrayToString($line = [])
-    {
-        if (!is_array($line)) {
-            throw new \InvalidArgumentException("CommonStandardValueWriter::csvQuoteNone only accepts Arrays");
-        }
-        return implode($this->csvDelimiter, $line) . $this->csvEOL;
-    }
-
+    protected $csvRecordQuoteMethod = 'quote_string';
     /**
-     * @return mixed
+     * @var string $csvWriteMethod
      */
-    protected function getFileHandle()
-    {
-        return $this->fileHandle;
-    }
-
+    protected $csvWriteMethod = 'truncate';
     /**
-     * @param $array
-     *
-*@return bool
+     * @var resource $fileHandle
      */
-    protected function is_assoc($array)
-    {
-        return (array_values($array) !== $array);
-    }
+    protected $fileHandle;
+    /**
+     * @var string $filePath
+     */
+    protected $filePath;
+    /**
+     * @var FilePathNormalizer $fpn
+     */
+    protected $fpn;
+    /**
+     * @var array $headerArray
+     */
+    protected $headerArray = [];
+    /**
+     * @var string $headerQuoteMethod
+     */
+    protected $headerQuoteMethod = 'quote_string';
+    /**
+     * @var string $listDelimiter
+     */
+    protected $listDelimiter = ' ';
+    /**
+     * @var bool $writeHeader
+     */
+    protected $writeHeader = true;
 }
