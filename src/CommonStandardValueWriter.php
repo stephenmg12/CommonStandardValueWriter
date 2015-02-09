@@ -100,12 +100,13 @@ class CommonStandardValueWriter
         if ('' === $this->headerQuoteMethod || false === $this->writeHeader) {
             return '';
         }
+        $eol = $this->getCsvEOL();
         if ('quote_none' === $this->headerQuoteMethod) {
-            return $this->lineArrayToString($this->quoteNone($this->headerArray));
+            return $this->quoteNone($this->headerArray) . $eol;
         } elseif ('quote_all' === $this->headerQuoteMethod) {
-            return $this->lineArrayToString($this->quoteAll($this->headerArray));
+            return $this->quoteAll($this->headerArray) . $eol;
         } elseif ('quote_string' === $this->headerQuoteMethod) {
-            return $this->lineArrayToString($this->quoteString($this->headerArray));
+            return $this->quoteString($this->headerArray) . $eol;
         }
         throw new \DomainException('CommonStandardValueWriter::getCsvHeader valid options are quote_all, quote_none, or quote_string');
     }
@@ -121,14 +122,15 @@ class CommonStandardValueWriter
      */
     public function getCsvRowsAsString()
     {
+        $eol = $this->getCsvEOL();
         $result = '';
         foreach ($this->csvArray as $line) {
             if ('quote_none' === $this->csvRecordQuoteMethod) {
-                $result .= $this->lineArrayToString($this->quoteNone($line));
+                $result .= $this->quoteNone($line) . $eol;
             } elseif ('quote_all' === $this->csvRecordQuoteMethod) {
-                $result .= $this->lineArrayToString($this->quoteAll($line));
+                $result .= $this->quoteAll($line) . $eol;
             } elseif ('quote_string' === $this->csvRecordQuoteMethod) {
-                $result .= $this->lineArrayToString($this->quoteString($line));
+                $result .= $this->quoteString($line) . $eol;
             } else {
                 throw new \DomainException('CommonStandardValueWriter::csvQuoteNone only accepts Arrays');
             }
@@ -283,15 +285,6 @@ class CommonStandardValueWriter
     /**
      * @param array $line
      *
-     * @return string
-     */
-    protected function lineArrayToString(array $line = [])
-    {
-        return implode($this->csvDelimiter, $line) . $this->csvEOL;
-    }
-    /**
-     * @param array $line
-     *
      * @return array
      */
     protected function quoteAll(array $line = [])
@@ -299,13 +292,9 @@ class CommonStandardValueWriter
         $tempLine = [];
         foreach ($line as $value) {
             if (is_array($value)) {
-                $tempLine[] =
-                    $this->csvQuote
-                    . implode($this->csvQuote . $this->getCsvDelimiter() . $this->csvQuote, $value)
-                    . $this->csvQuote;
-            } else {
-                $tempLine[] = $this->csvQuote . $value . $this->csvQuote;
+                $value = implode($this->getCsvQuote() . $this->getCsvDelimiter() . $this->getCsvQuote(), $value);
             }
+            $tempLine[] = $this->csvQuote . $value . $this->csvQuote;
         }
         return $tempLine;
     }
