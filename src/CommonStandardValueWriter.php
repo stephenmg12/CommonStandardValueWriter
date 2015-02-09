@@ -210,10 +210,10 @@ class CommonStandardValueWriter
     public function commit()
     {
         $fileHandle = $this->getFileHandle();
-        if (empty($fileHandle)) {
+        if (!is_resource($fileHandle)) {
             $path = $this->getFilePath();
             if ($this->getCsvWriteMethod() == 'append') {
-                $fileHandle = fopen($path, 'a+');
+                $fileHandle = fopen($path, 'ab+');
             } else {
                 $fileHandle = fopen($path, 'w+');
             }
