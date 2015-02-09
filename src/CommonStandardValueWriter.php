@@ -1,7 +1,9 @@
 <?php
 /**
  * Contains CommonStandardValueWriter.
+ *
  * PHP version 5.4
+ *
  * LICENSE:
  * This file is part of CommonStandardValueWriter - A better PHP CSV Writer Class for PHP.
  * One of the main goals is to be more flexible then built-in function is PHP
@@ -17,6 +19,7 @@
  * this program. If not, see
  * <http://www.gnu.org/licenses/>.
  * You should be able to find a copy of this license in the LICENSE file.
+ *
  * @copyright 2014-2015 Stephen Gulick
  * @license   http://www.gnu.org/licenses/gpl-2.0.html GNU GPLv2
  * @author    Stephen Gulick <stephenmg12@gmail.com>
@@ -69,30 +72,10 @@ class CommonStandardValueWriter
             $path = $this->getFilePath();
             $fileHandle = 'append' === $this->getCsvWriteMethod() ? fopen($path, 'ab+') : fopen($path, 'wb+');
         }
-        if ('' !== $this->headerQuoteMethod && true === $this->writeHeader) {
-            if ('quote_none' === $this->headerQuoteMethod) {
-                $tempLine = $this->lineArrayToString($this->quoteNone($this->headerArray));
-            } elseif ('quote_all' === $this->headerQuoteMethod) {
-                $tempLine = $this->lineArrayToString($this->quoteAll($this->headerArray));
-            } elseif ('quote_string' === $this->headerQuoteMethod) {
-                $tempLine = $this->lineArrayToString($this->quoteString($this->headerArray));
-            } else {
-                throw new \DomainException('CommonStandardValueWriter::commit valid options are quote_all, quote_none, or quote_string');
-            }
-            fwrite($fileHandle, $tempLine);
-        }
-        foreach ($this->csvArray as $line) {
-            if ('quote_none' === $this->csvRecordQuoteMethod) {
-                $tempLine = $this->lineArrayToString($this->quoteNone($line));
-            } elseif ('quote_all' === $this->csvRecordQuoteMethod) {
-                $tempLine = $this->lineArrayToString($this->quoteAll($line));
-            } elseif ('quote_string' === $this->csvRecordQuoteMethod) {
-                $tempLine = $this->lineArrayToString($this->quoteString($line));
-            } else {
-                throw new \DomainException('CommonStandardValueWriter::csvQuoteNone only accepts Arrays');
-            }
-            fwrite($fileHandle, $tempLine);
-        }
+        $tempLine = $this->getCsvHeader();
+        fwrite($fileHandle, $tempLine);
+        $tempLine = $this->getCsvRowsAsString();
+        fwrite($fileHandle, $tempLine);
         return $this;
     }
     /**
@@ -108,6 +91,49 @@ class CommonStandardValueWriter
     public function getCsvEOL()
     {
         return $this->csvEOL;
+    }
+    /**
+     * @return string
+     */
+    public function getCsvHeader()
+    {
+        if ('' === $this->headerQuoteMethod || false === $this->writeHeader) {
+            return '';
+        }
+        if ('quote_none' === $this->headerQuoteMethod) {
+            return $this->lineArrayToString($this->quoteNone($this->headerArray));
+        } elseif ('quote_all' === $this->headerQuoteMethod) {
+            return $this->lineArrayToString($this->quoteAll($this->headerArray));
+        } elseif ('quote_string' === $this->headerQuoteMethod) {
+            return $this->lineArrayToString($this->quoteString($this->headerArray));
+        }
+        throw new \DomainException('CommonStandardValueWriter::getCsvHeader valid options are quote_all, quote_none, or quote_string');
+    }
+    /**
+     * @return string
+     */
+    public function getCsvQuote()
+    {
+        return $this->csvQuote;
+    }
+    /**
+     * @return string
+     */
+    public function getCsvRowsAsString()
+    {
+        $result = '';
+        foreach ($this->csvArray as $line) {
+            if ('quote_none' === $this->csvRecordQuoteMethod) {
+                $result .= $this->lineArrayToString($this->quoteNone($line));
+            } elseif ('quote_all' === $this->csvRecordQuoteMethod) {
+                $result .= $this->lineArrayToString($this->quoteAll($line));
+            } elseif ('quote_string' === $this->csvRecordQuoteMethod) {
+                $result .= $this->lineArrayToString($this->quoteString($line));
+            } else {
+                throw new \DomainException('CommonStandardValueWriter::csvQuoteNone only accepts Arrays');
+            }
+        }
+        return $result;
     }
     /**
      * @return string
@@ -131,11 +157,18 @@ class CommonStandardValueWriter
         return $this->fpn;
     }
     /**
+     * @return string
+     */
+    public function getHeaderQuoteMethod()
+    {
+        return $this->headerQuoteMethod;
+    }
+    /**
      * @param string $csvDelimiter
      */
-    public function setCsvDelimiter($csvDelimiter)
+    public function setCsvDelimiter($csvDelimiter = '"')
     {
-        $this->csvDelimiter = $csvDelimiter;
+        $this->csvDelimiter = (string)$csvDelimiter;
     }
     /**
      * @param string $csvEOL
@@ -145,11 +178,22 @@ class CommonStandardValueWriter
         $this->csvEOL = $csvEOL;
     }
     /**
-     * @param string $csvWriteMethod
+     * @param string $value
+     *
+     * @return self
      */
-    public function setCsvWriteMethod($csvWriteMethod)
+    public function setCsvQuote($value)
     {
-        $this->csvWriteMethod = (string)$csvWriteMethod;
+        $this->csvQuote = $value;
+        return $this;
+    }
+    /**
+     * @param string $value
+     */
+    public function setCsvWriteMethod($value = 'quote_string')
+    {
+        $this->ValidateQuoteMethod($value);
+        $this->csvWriteMethod = $value;
     }
     /**
      * @param mixed $fileHandle
@@ -190,6 +234,17 @@ class CommonStandardValueWriter
         return $this;
     }
     /**
+     * @param string $value
+     *
+     * @return self
+     */
+    public function setHeaderQuoteMethod($value = 'quote_string')
+    {
+        $this->ValidateQuoteMethod($value);
+        $this->headerQuoteMethod = $value;
+        return $this;
+    }
+    /**
      * @param string $filePath
      *
      * @return $this
@@ -199,6 +254,15 @@ class CommonStandardValueWriter
     {
         $this->filePath = $this->fpn->normalizeFile($filePath);
         return $this;
+    }
+    /**
+     * @param $value
+     */
+    protected function ValidateQuoteMethod($value)
+    {
+        if (!in_array($value, ['quote_all', 'quote_none', 'quote_string'], true)) {
+            throw new \DomainException('CommonStandardValueWriter::getCsvHeader valid options are quote_all, quote_none, or quote_string');
+        }
     }
     /**
      * @return mixed
@@ -235,9 +299,13 @@ class CommonStandardValueWriter
         $tempLine = [];
         foreach ($line as $value) {
             if (is_array($value)) {
-                $value = implode(',', $value);
+                $tempLine[] =
+                    $this->csvQuote
+                    . implode($this->csvQuote . $this->getCsvDelimiter() . $this->csvQuote, $value)
+                    . $this->csvQuote;
+            } else {
+                $tempLine[] = $this->csvQuote . $value . $this->csvQuote;
             }
-            $tempLine[] = '"' . $value . '"';
         }
         return $tempLine;
     }
@@ -262,9 +330,12 @@ class CommonStandardValueWriter
             if (is_numeric($value)) {
                 $tempLine[] = $value;
             } elseif (is_array($value)) {
-                $tempLine[] = '"' . implode(',', $value) . '"';
+                $tempLine[] =
+                    $this->csvQuote
+                    . implode($this->csvQuote . $this->getCsvDelimiter() . $this->csvQuote, $value)
+                    . $this->csvQuote;
             } else {
-                $tempLine[] = '"' . $value . '"';
+                $tempLine[] = $this->csvQuote . $value . $this->csvQuote;
             }
         }
         return $tempLine;
@@ -281,6 +352,10 @@ class CommonStandardValueWriter
      * @var string $csvEOL
      */
     protected $csvEOL = '\n';
+    /**
+     * @var string $csvQuote = '"';
+     */
+    protected $csvQuote = '"';
     /**
      * @var int $csvRecordCount
      */
