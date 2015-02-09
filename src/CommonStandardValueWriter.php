@@ -101,14 +101,12 @@ class CommonStandardValueWriter
             return '';
         }
         $eol = $this->getCsvEOL();
-        if ('quote_none' === $this->headerQuoteMethod) {
-            return $this->quoteNone($this->headerArray) . $eol;
-        } elseif ('quote_all' === $this->headerQuoteMethod) {
+        if ('quote_all' === $this->headerQuoteMethod) {
             return $this->quoteAll($this->headerArray) . $eol;
         } elseif ('quote_string' === $this->headerQuoteMethod) {
             return $this->quoteString($this->headerArray) . $eol;
         }
-        throw new \DomainException('CommonStandardValueWriter::getCsvHeader valid options are quote_all, quote_none, or quote_string');
+        return $this->headerArray . $eol;
     }
     /**
      * @return string
@@ -125,15 +123,12 @@ class CommonStandardValueWriter
         $eol = $this->getCsvEOL();
         $result = '';
         foreach ($this->csvArray as $line) {
-            if ('quote_none' === $this->csvRecordQuoteMethod) {
-                $result .= $this->quoteNone($line) . $eol;
-            } elseif ('quote_all' === $this->csvRecordQuoteMethod) {
-                $result .= $this->quoteAll($line) . $eol;
+            if ('quote_all' === $this->csvRecordQuoteMethod) {
+                $line = $this->quoteAll($line);
             } elseif ('quote_string' === $this->csvRecordQuoteMethod) {
-                $result .= $this->quoteString($line) . $eol;
-            } else {
-                throw new \DomainException('CommonStandardValueWriter::csvQuoteNone only accepts Arrays');
+                $line = $this->quoteString($line);
             }
+            $result .= $line . $eol;
         }
         return $result;
     }
