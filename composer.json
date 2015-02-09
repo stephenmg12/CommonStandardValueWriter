@@ -16,5 +16,9 @@
   "require": {
     "php": ">=5.4.1",
     "dragonrun1/file_path_normalizer": "~1.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "4.7.*@dev",
+    "mikey179/vfsStream": "1.4.*@dev"
   }
 }
