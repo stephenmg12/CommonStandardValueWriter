@@ -1,0 +1,19 @@
+suites:
+    yapeal_suite:
+        namespace: CommonStandardValueWriter
+        psr4_prefix: CommonStandardValueWriter
+        spec_path: specs
+        spec_prefix: Spec
+        src_path: src
+
+extensions:
+    - PhpSpec\NyanFormattersExtension\Extension
+    - PhpSpec\Extension\CodeCoverageExtension
+
+formatter.name: nyan.cat
+
+code_coverage:
+  format:
+    - html
+  output:
+    html: coverage
