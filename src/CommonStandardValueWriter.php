@@ -35,7 +35,7 @@ require_once dirname(__DIR__) . '/bootstrap.php';
 class CommonStandardValueWriter
 {
     /**
-     * Used to set quote method for setCsvWriteMethod() and setHeaderQuoteMethod().
+     * Used to set quote method for setCsvWriteMethod() and setHeaderQuoteMode().
      */
     const QUOTE_ALL = 'quote_all';
     const QUOTE_NONE = 'quote_none';
@@ -52,8 +52,7 @@ class CommonStandardValueWriter
      */
     public function __toString()
     {
-        $result = trim($this->getCsvHeader() . $this->getCsvRowsAsString());
-        //var_dump($result);
+        $result = trim($this->getCsvHeader() . $this->getCsvRowsAsString(), $this->csvEOL);
         return $result;
     }
     /**
@@ -78,9 +77,9 @@ class CommonStandardValueWriter
         if (false === $this->writeHeader || 0 === count($this->headerArray)) {
             return '';
         }
-        if (self::QUOTE_ALL === $this->headerQuoteMethod) {
+        if (self::QUOTE_ALL === $this->headerQuoteMode) {
             return implode($this->csvDelimiter, $this->quoteAll($this->headerArray)) . $this->csvEOL;
-        } elseif (self::QUOTE_STRING === $this->headerQuoteMethod) {
+        } elseif (self::QUOTE_STRING === $this->headerQuoteMode) {
             return implode($this->csvDelimiter, $this->quoteString($this->headerArray)) . $this->csvEOL;
         }
         return implode($this->csvDelimiter, $this->headerArray) . $this->csvEOL;
@@ -95,9 +94,9 @@ class CommonStandardValueWriter
         }
         $result = '';
         foreach ($this->csvArray as $line) {
-            if (self::QUOTE_ALL === $this->csvColumnQuoteMethod) {
+            if (self::QUOTE_ALL === $this->csvColumnQuoteMode) {
                 $line = implode($this->csvDelimiter, $this->quoteAll($line));
-            } elseif (self::QUOTE_STRING === $this->csvColumnQuoteMethod) {
+            } elseif (self::QUOTE_STRING === $this->csvColumnQuoteMode) {
                 $line = implode($this->csvDelimiter, $this->quoteString($line));
             } else {
                 $line = implode($this->csvDelimiter, $line);
@@ -109,11 +108,13 @@ class CommonStandardValueWriter
     /**
      * @param string $value
      *
-     * @return self
+     * @return CommonStandardValueWriter
+     * @throws \DomainException
      */
-    public function setCsvColumnQuoteMethod($value = self::QUOTE_STRING)
+    public function setCsvColumnQuoteMode($value = self::QUOTE_STRING)
     {
-        $this->csvColumnQuoteMethod = $value;
+        $this->validateQuoteMode($value);
+        $this->csvColumnQuoteMode = $value;
         return $this;
     }
     /**
@@ -121,26 +122,29 @@ class CommonStandardValueWriter
      *
      * @return $this
      */
-    public function setCsvDelimiter($csvDelimiter = '"')
+    public function setCsvDelimiter($csvDelimiter = ',')
     {
         $this->csvDelimiter = (string)$csvDelimiter;
         return $this;
     }
     /**
      * @param string $csvEOL
+     *
+     * @return $this
      */
     public function setCsvEOL($csvEOL)
     {
         $this->csvEOL = $csvEOL;
+        return $this;
     }
     /**
      * @param string $value
      *
      * @return self
      */
-    public function setCsvQuote($value)
+    public function setCsvQuote($value = '"')
     {
-        $this->csvQuote = $value;
+        $this->csvQuote = (string)$value;
         return $this;
     }
     /**
@@ -186,10 +190,10 @@ class CommonStandardValueWriter
      * @return CommonStandardValueWriter
      * @throws \DomainException
      */
-    public function setHeaderQuoteMethod($value = self::QUOTE_STRING)
+    public function setHeaderQuoteMode($value = self::QUOTE_STRING)
     {
-        $this->validateQuoteMethod($value);
-        $this->headerQuoteMethod = $value;
+        $this->validateQuoteMode($value);
+        $this->headerQuoteMode = $value;
         return $this;
     }
     /**
@@ -319,7 +323,7 @@ class CommonStandardValueWriter
      *
      * @throws \DomainException
      */
-    protected function validateQuoteMethod($value)
+    protected function validateQuoteMode($value)
     {
         if (!in_array($value, ['quote_all', 'quote_none', 'quote_string'], true)) {
             throw new \DomainException(
@@ -331,6 +335,12 @@ class CommonStandardValueWriter
      * @var array $csvArray
      */
     protected $csvArray;
+    /**
+     * Set to quote_all, quote_none, or quote_string (default).
+     *
+     * @var string $csvColumnQuoteMode
+     */
+    protected $csvColumnQuoteMode = self::QUOTE_STRING;
     /**
      * @var string $csvDelimiter
      */
@@ -344,12 +354,6 @@ class CommonStandardValueWriter
      */
     protected $csvQuote = '"';
     /**
-     * Set to quote_all, quote_none, or quote_string (default).
-     *
-     * @var string $csvColumnQuoteMethod
-     */
-    protected $csvColumnQuoteMethod = self::QUOTE_STRING;
-    /**
      * @var string $csvWriteMethod
      */
     protected $csvWriteMethod = 'truncate';
@@ -362,9 +366,9 @@ class CommonStandardValueWriter
      */
     protected $headerArray;
     /**
-     * @var string $headerQuoteMethod
+     * @var string $headerQuoteMode
      */
-    protected $headerQuoteMethod = self::QUOTE_STRING;
+    protected $headerQuoteMode = self::QUOTE_STRING;
     /**
      * @var string $quoteEscapeMode
      */

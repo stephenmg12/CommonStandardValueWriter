@@ -14,6 +14,8 @@ formatter.name: nyan.cat
 
 code_coverage:
   format:
-    - html
+    #- html
+    - clover
   output:
-    html: coverage
+    #html: coverage
+    clover: coverage.xml
