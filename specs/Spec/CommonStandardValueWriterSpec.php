@@ -17,6 +17,15 @@ class CommonStandardValueWriterSpec extends ObjectBehavior
     {
         $this->shouldHaveType('CommonStandardValueWriter\CommonStandardValueWriter');
     }
+    public function itShouldAllowAddingComplexColumnsIfQuoted()
+    {
+        $this->addLine(['test1', 123, ['test2', 'test3']])
+             ->__toString()
+             ->shouldReturn("\"test1\",123,\"test2,test3\"");
+        $this->setCsvColumnQuoteMode(CommonStandardValueWriter::QUOTE_ALL)
+             ->__toString()
+             ->shouldReturn("\"test1\",\"123\",\"test2,test3\"");
+    }
     public function itShouldGiveEmptyStringIfNoHeaderOrRowsAdded()
     {
         $this->__toString()
