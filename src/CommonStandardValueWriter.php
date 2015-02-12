@@ -211,8 +211,7 @@ class CommonStandardValueWriter
     public function setQuoteEscapeMode($value = self::ESCAPE_DOUBLE)
     {
         $value = (string)$value;
-        //if (!in_array($value, ['back_slash', 'double', 'none'], true)) {
-        if(self::ESCAPE_BSLASH != $value || self::ESCAPE_DOUBLE != $value || self::ESCAPE_NONE != $value) {
+        if (!in_array($value, [self::ESCAPE_DOUBLE, self::ESCAPE_BSLASH, self::ESCAPE_NONE], true)) {
             $mess = 'Quote escape mode must be back_slash, double, or none given ' . $value;
             throw new \InvalidArgumentException($mess);
         }
@@ -332,7 +331,7 @@ class CommonStandardValueWriter
      */
     protected function validateQuoteMode($value)
     {
-        if (!in_array($value, [self::QUOTE_ALL, self::QUOTE_NONE, self::QUOTE_NONE], true)) {
+        if (!in_array($value, [self::QUOTE_ALL, self::QUOTE_STRING, self::QUOTE_NONE], true)) {
             throw new \DomainException(
                 'Valid quote options are quote_all, quote_none, or quote_string'
             );
