@@ -325,7 +325,7 @@ class CommonStandardValueWriter
      */
     protected function validateQuoteMode($value)
     {
-        if (!in_array($value, ['quote_all', 'quote_none', 'quote_string'], true)) {
+        if (!in_array($value, [self::QUOTE_ALL, self::QUOTE_NONE, self::QUOTE_NONE], true)) {
             throw new \DomainException(
                 'Valid quote options are quote_all, quote_none, or quote_string'
             );
