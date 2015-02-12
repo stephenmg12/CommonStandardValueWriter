@@ -273,10 +273,10 @@ class CommonStandardValueWriter
      */
     protected function doQuoteEscape($string)
     {
-        if ('double' === $this->quoteEscapeMode) {
+        if (self::ESCAPE_DOUBLE === $this->quoteEscapeMode) {
             return str_replace($this->csvQuote, $this->csvQuote . $this->csvQuote, (string)$string);
         }
-        if ('bach_slash' === $this->quoteEscapeMode) {
+        if (self::ESCAPE_BSLASH === $this->quoteEscapeMode) {
             return str_replace($this->csvQuote, '\\' . $this->csvQuote, (string)$string);
         }
         return $string;
