@@ -41,6 +41,12 @@ class CommonStandardValueWriter
     const QUOTE_NONE = 'quote_none';
     const QUOTE_STRING = 'quote_string';
     /**
+     * Used to set escape mode for setQuoteEscapeMode()
+     */
+    const ESCAPE_DOUBLE = 'double';
+    const ESCAPE_BSLASH = 'back_slash';
+    const ESCAPE_NONE = 'none';
+    /**
      * @param FilePathNormalizer $fpn
      */
     public function __construct(FilePathNormalizer $fpn = null)
@@ -202,10 +208,11 @@ class CommonStandardValueWriter
      * @return CommonStandardValueWriter
      * @throws \InvalidArgumentException
      */
-    public function setQuoteEscapeMode($value)
+    public function setQuoteEscapeMode($value = self::ESCAPE_DOUBLE)
     {
         $value = (string)$value;
-        if (!in_array($value, ['back_slash', 'double', 'none'], true)) {
+        //if (!in_array($value, ['back_slash', 'double', 'none'], true)) {
+        if(self::ESCAPE_BSLASH != $value || self::ESCAPE_DOUBLE != $value || self::ESCAPE_NONE != $value) {
             $mess = 'Quote escape mode must be back_slash, double, or none given ' . $value;
             throw new \InvalidArgumentException($mess);
         }
@@ -372,7 +379,7 @@ class CommonStandardValueWriter
     /**
      * @var string $quoteEscapeMode
      */
-    protected $quoteEscapeMode = 'double';
+    protected $quoteEscapeMode = self::ESCAPE_DOUBLE;
     /**
      * @var bool $writeHeader
      */
