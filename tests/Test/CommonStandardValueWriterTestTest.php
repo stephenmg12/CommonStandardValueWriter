@@ -50,6 +50,21 @@ class CommonStandardValueWriterTest extends \PHPUnit_Framework_TestCase
         $csvw->setCsvColumnQuoteMode(CommonStandardValueWriter::QUOTE_ALL);
         $csvw->addLine($line);
         $this->assertEquals("\"test1\",\"123\",\"test3\"\n", $csvw->getCsvRowsAsString());
+        $line = array('test1','test2',array('test3','test4','test5'));
+        $csvw->addLine($line);
+        $this->assertEquals("\"test1\",\"123\",\"test3\"\n\"test1\",\"test2\",\"test3,test4,test5\"\n", $csvw->getCsvRowsAsString());
+    }
+
+    public function testCsvQuoteStringMode()
+    {
+        $line=array('test1','123','test3');
+        $csvw = new CommonStandardValueWriter();
+        $csvw->setCsvColumnQuoteMode(CommonStandardValueWriter::QUOTE_STRING);
+        $csvw->addLine($line);
+        $this->assertEquals("\"test1\",123,\"test3\"\n", $csvw->getCsvRowsAsString());
+        $line = array('test1','test2',array('test3','test4','test5'));
+        $csvw->addLine($line);
+        $this->assertEquals("\"test1\",123,\"test3\"\n\"test1\",\"test2\",\"test3,test4,test5\"\n", $csvw->getCsvRowsAsString());
     }
 
     public function testCsvQuoteNoneMode()
@@ -120,5 +135,32 @@ class CommonStandardValueWriterTest extends \PHPUnit_Framework_TestCase
         $csvw->setHeaderArray($header);
         $this->assertEquals("\"test1\",\"test2\",\"test3\"\n", $csvw->getCsvHeader());
     }
+
+    public function testSetQuoteEscapeMode()
+    {
+        $line = array('test1','"test two"','test3');
+        $csvw = new CommonStandardValueWriter();
+        $csvw->setQuoteEscapeMode(CommonStandardValueWriter::ESCAPE_DOUBLE)->addLine($line);
+        $this->assertEquals("\"test1\",\"\"\"test two\"\"\",\"test3\"\n", $csvw->getCsvRowsAsString());
+        $csvw->setQuoteEscapeMode(CommonStandardValueWriter::ESCAPE_BSLASH);
+        $this->assertEquals("\"test1\",\"\\\"test two\\\"\",\"test3\"\n", $csvw->getCsvRowsAsString());
+        $csvw->setQuoteEscapeMode(CommonStandardValueWriter::ESCAPE_NONE);
+        $this->assertEquals("\"test1\",\"\"test two\"\",\"test3\"\n", $csvw->getCsvRowsAsString());
+    }
+
+    public function testSetQuoteEscapeModeException()
+    {
+        $this->setExpectedException('InvalidArgumentException', 'Quote escape mode must be back_slash, double, or none given error');
+        $csvw = new CommonStandardValueWriter();
+        $csvw->setQuoteEscapeMode('error');
+    }
+
+    public function testValidateQuoteModeException()
+    {
+        $this->setExpectedException('DomainException', 'Valid quote options are quote_all, quote_none, or quote_string');
+        $csvw = new CommonStandardValueWriter();
+        $csvw->setCsvColumnQuoteMode('error');
+    }
+
 
 }
