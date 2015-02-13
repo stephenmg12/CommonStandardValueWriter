@@ -29,6 +29,8 @@ namespace CommonStandardValueWriterTest\Test;
 require_once dirname(dirname(__DIR__)).'/bootstrap.php';
 
 use CommonStandardValueWriter\CommonStandardValueWriter;
+use org\bovigo\vfs\vfsStream;
+use FilePathNormalizer\FilePathNormalizer;
 
 /**
  * Class CommonStandardValueWriterTest
@@ -162,5 +164,16 @@ class CommonStandardValueWriterTest extends \PHPUnit_Framework_TestCase
         $csvw->setCsvColumnQuoteMode('error');
     }
 
-
+    public function testWriteToFile()
+    {
+        $fpn = new FilePathNormalizer();
+        $csvw = new CommonStandardValueWriter();
+        $header = array('header1', 'header2', 'header3');
+        $line = array('test1', '123', 'test3');
+        $root = vfsStream::setup('test');
+        $csvw->setHeaderArray($header)->addLine($line)->setFpn($fpn)->writeToFile('vfs://test/test.csv');
+        $actual = file_get_contents('vfs://test/test.csv');
+        $expected = $csvw->__toString();
+        $this->assertEquals($expected, $actual);
+    }
 }
