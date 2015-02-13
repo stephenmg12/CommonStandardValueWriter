@@ -228,25 +228,6 @@ class CommonStandardValueWriterTest extends \PHPUnit_Framework_TestCase
         $expected = $csvw->__toString();
         $this->assertEquals($expected, $actual);
     }
-    public function testSetCsvDelimiterAndSetCsvEOL()
-    {
-        $line = ['test1', '123', 'test3'];
-        $csvw = new CommonStandardValueWriter();
-        $csvw->addLine([])
-             ->setCsvDelimiter("\t")
-             ->setCsvEOL("\r\n")
-             ->addLine($line);
-        $this->assertEquals("\"test1\"\t123\t\"test3\"\r\n", $csvw->getCsvRowsAsString());
-    }
-    public function testSetCsvQuote()
-    {
-        $line = ['test1', '123', 'test3'];
-        $csvw = new CommonStandardValueWriter();
-        $csvw->addLine([])
-             ->setCsvQuote("'")
-             ->addLine($line);
-        $this->assertEquals("'test1',123,'test3'\n", $csvw->getCsvRowsAsString());
-    }
 
     public function testFluidInterface()
     {
@@ -301,14 +282,37 @@ class CommonStandardValueWriterTest extends \PHPUnit_Framework_TestCase
         $header=['header1','header2','header3'];
         $line = ['test1','test2','test3'];
         $content = "\"header4\",\"header5\",\"header6\"\n";
-        vfsStream::setup('test');
-        vfsStream::newFile('test.csv')->withContent($content);
+        $root = vfsStream::setup('test');
+        vfsStream::newFile('test.csv')->withContent($content)->at($root);
         $csvw = new CommonStandardValueWriter();
         $csvw->setCsvWriteMethod(CommonStandardValueWriter::WRITE_APPEND)->setHeaderArray($header)->addLine($line)->writeToFile('vfs://test/test.csv');
-        $actual = file_get_contents('vfs://test/test.csv');
+        $actual = file_get_contents(vfsStream::url('test/test.csv'));
         $expected = $content.$csvw->__toString();
         $this->assertEquals($expected, $actual);
     }
 
+    public function testsetCsvWriteMethodTruncate()
+    {
+        $header=['header1','header2','header3'];
+        $line = ['test1','test2','test3'];
+        $content = "\"header4\",\"header5\",\"header6\"\n";
+        vfsStream::setup('test');
+        vfsStream::newFile('test.csv')->withContent($content);
+        $csvw = new CommonStandardValueWriter();
+        $csvw->setCsvWriteMethod(CommonStandardValueWriter::WRITE_TRUNCATE)->setHeaderArray($header)->addLine($line)->writeToFile('vfs://test/test.csv');
+        $actual = file_get_contents('vfs://test/test.csv');
+        $expected = $csvw->__toString();
+        $this->assertEquals($expected, $actual);
+    }
+
+    public function testSetCsvWriteMethodException()
+    {
+        $this->setExpectedException(
+            'DomainException',
+            'csvWriteMethod must be either CommonStandardValueWriter::WRITE_APPEND or CommonStandardValueWriter::WRITE_TRUNCATE'
+        );
+        $csvw = new CommonStandardValueWriter();
+        $csvw->setCsvWriteMethod('error');
+    }
 
 }
