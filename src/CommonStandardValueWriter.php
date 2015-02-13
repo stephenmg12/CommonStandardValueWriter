@@ -35,24 +35,22 @@ require_once dirname(__DIR__) . '/bootstrap.php';
 class CommonStandardValueWriter
 {
     /**
+     * Used to set escape mode for setQuoteEscapeMode()
+     */
+    const ESCAPE_BSLASH = 'back_slash';
+    const ESCAPE_DOUBLE = 'double';
+    const ESCAPE_NONE = 'none';
+    /**
      * Used to set quote method for setCsvWriteMethod() and setHeaderQuoteMode().
      */
     const QUOTE_ALL = 'quote_all';
     const QUOTE_NONE = 'quote_none';
     const QUOTE_STRING = 'quote_string';
     /**
-     * Used to set escape mode for setQuoteEscapeMode()
-     */
-    const ESCAPE_DOUBLE = 'double';
-    const ESCAPE_BSLASH = 'back_slash';
-    const ESCAPE_NONE = 'none';
-
-    /**
      * Used to set Write Method in setWriteMethod
      */
     const WRITE_APPEND = 'append';
     const WRITE_TRUNCATE = 'truncate';
-
     /**
      * @param FilePathNormalizer $fpn
      */
@@ -118,10 +116,11 @@ class CommonStandardValueWriter
         }
         return $result;
     }
-
     /**
      * @param string $value
+     *
      * @return $this
+     * @throws \DomainException
      */
     public function setCsvColumnQuoteMode($value = self::QUOTE_STRING)
     {
@@ -144,9 +143,9 @@ class CommonStandardValueWriter
      *
      * @return $this
      */
-    public function setCsvEOL($csvEOL)
+    public function setCsvEOL($csvEOL = "\n")
     {
-        $this->csvEOL = $csvEOL;
+        $this->csvEOL = (string)$csvEOL;
         return $this;
     }
     /**
@@ -159,7 +158,6 @@ class CommonStandardValueWriter
         $this->csvQuote = (string)$value;
         return $this;
     }
-
     /**
      * @param string $value
      *
@@ -168,16 +166,18 @@ class CommonStandardValueWriter
      */
     public function setCsvWriteMethod($value = self::WRITE_APPEND)
     {
-        if($value !== self::WRITE_APPEND || $value !== self::WRITE_TRUNCATE) {
-            $mess = 'csvWriteMethod must be either CommonStandardValueWriter::WRITE_APPEND or CommonStandardValueWriter::WRITE_TRUNCATE';
+        $value = (string)$value;
+        if (!in_array($value, [self::WRITE_APPEND, self::WRITE_TRUNCATE], true)) {
+            $mess =
+                'csvWriteMethod must be either CommonStandardValueWriter::WRITE_APPEND or CommonStandardValueWriter::WRITE_TRUNCATE';
             throw new \DomainException($mess);
         }
         $this->csvWriteMethod = $value;
         return $this;
     }
-
     /**
      * @param FilePathNormalizer $value
+     *
      * @return $this
      */
     public function setFpn($value = null)

@@ -108,6 +108,58 @@ class CommonStandardValueWriterTest extends \PHPUnit_Framework_TestCase
         $header = [['test1', '123', 'test3'], ['test4', 'test5', 'test6']];
         $csvw->setHeaderArray($header);
     }
+    public function testSetCsvColumnQuoteModeHasFluentInterface()
+    {
+        $csvw = new CommonStandardValueWriter();
+        $this->assertInstanceOf(
+            '\\CommonStandardValueWriter\\CommonStandardValueWriter',
+            $csvw->setCsvColumnQuoteMode()
+        );
+    }
+    public function testSetCsvDelimiterAndSetCsvEOL()
+    {
+        $line = ['test1', '123', 'test3'];
+        $csvw = new CommonStandardValueWriter();
+        $csvw->addLine([])
+             ->setCsvDelimiter("\t")
+             ->setCsvEOL("\r\n")
+             ->addLine($line);
+        $this->assertEquals("\"test1\"\t123\t\"test3\"\r\n", $csvw->getCsvRowsAsString());
+    }
+    public function testSetCsvDelimiterHasFluentInterface()
+    {
+        $csvw = new CommonStandardValueWriter();
+        $this->assertInstanceOf('\\CommonStandardValueWriter\\CommonStandardValueWriter', $csvw->setCsvDelimiter());
+    }
+    public function testSetCsvEOLHasFluentInterface()
+    {
+        $csvw = new CommonStandardValueWriter();
+        $this->assertInstanceOf('\\CommonStandardValueWriter\\CommonStandardValueWriter', $csvw->setCsvEOL());
+    }
+    public function testSetCsvQuote()
+    {
+        $line = ['test1', '123', 'test3'];
+        $csvw = new CommonStandardValueWriter();
+        $csvw->addLine([])
+             ->setCsvQuote("'")
+             ->addLine($line);
+        $this->assertEquals("'test1',123,'test3'\n", $csvw->getCsvRowsAsString());
+    }
+    public function testSetCsvQuoteHasFluentInterface()
+    {
+        $csvw = new CommonStandardValueWriter();
+        $this->assertInstanceOf('\\CommonStandardValueWriter\\CommonStandardValueWriter', $csvw->setCsvQuote());
+    }
+    public function testSetCsvWriteMethodHasFluentInterface()
+    {
+        $csvw = new CommonStandardValueWriter();
+        $this->assertInstanceOf('\\CommonStandardValueWriter\\CommonStandardValueWriter', $csvw->setCsvWriteMethod());
+    }
+    public function testSetFpnHasFluentInterface()
+    {
+        $csvw = new CommonStandardValueWriter();
+        $this->assertInstanceOf('\\CommonStandardValueWriter\\CommonStandardValueWriter', $csvw->setFpn());
+    }
     public function testSetHeader()
     {
         $header = ['test1', 'test2', 'test3'];
@@ -115,6 +167,16 @@ class CommonStandardValueWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('', $csvw->getCsvHeader());
         $csvw->setHeaderArray($header);
         $this->assertEquals("\"test1\",\"test2\",\"test3\"\n", $csvw->getCsvHeader());
+    }
+    public function testSetHeaderArrayHasFluentInterface()
+    {
+        $csvw = new CommonStandardValueWriter();
+        $this->assertInstanceOf('\\CommonStandardValueWriter\\CommonStandardValueWriter', $csvw->setHeaderArray());
+    }
+    public function testSetHeaderQuoteModeHasFluentInterface()
+    {
+        $csvw = new CommonStandardValueWriter();
+        $this->assertInstanceOf('\\CommonStandardValueWriter\\CommonStandardValueWriter', $csvw->setHeaderQuoteMode());
     }
     public function testSetQuoteEscapeMode()
     {
@@ -136,6 +198,11 @@ class CommonStandardValueWriterTest extends \PHPUnit_Framework_TestCase
         );
         $csvw = new CommonStandardValueWriter();
         $csvw->setQuoteEscapeMode('error');
+    }
+    public function testSetQuoteEscapeModeHasFluentInterface()
+    {
+        $csvw = new CommonStandardValueWriter();
+        $this->assertInstanceOf('\\CommonStandardValueWriter\\CommonStandardValueWriter', $csvw->setQuoteEscapeMode());
     }
     public function testValidateQuoteModeException()
     {
@@ -160,24 +227,5 @@ class CommonStandardValueWriterTest extends \PHPUnit_Framework_TestCase
         $actual = file_get_contents('vfs://test/test.csv');
         $expected = $csvw->__toString();
         $this->assertEquals($expected, $actual);
-    }
-    public function testSetCsvDelimiterAndSetCsvEOL()
-    {
-        $line = ['test1', '123', 'test3'];
-        $csvw = new CommonStandardValueWriter();
-        $csvw->addLine([])
-             ->setCsvDelimiter("\t")
-             ->setCsvEOL("\r\n")
-             ->addLine($line);
-        $this->assertEquals("\"test1\"\t123\t\"test3\"\r\n", $csvw->getCsvRowsAsString());
-    }
-    public function testSetCsvQuote()
-    {
-        $line = ['test1', '123', 'test3'];
-        $csvw = new CommonStandardValueWriter();
-        $csvw->addLine([])
-             ->setCsvQuote("'")
-             ->addLine($line);
-        $this->assertEquals("'test1',123,'test3'\n", $csvw->getCsvRowsAsString());
     }
 }
