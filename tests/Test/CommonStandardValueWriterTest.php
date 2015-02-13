@@ -152,7 +152,7 @@ class CommonStandardValueWriterTest extends \PHPUnit_Framework_TestCase
         $csvw = new CommonStandardValueWriter();
         $header = ['header1', 'header2', 'header3'];
         $line = ['test1', '123', 'test3'];
-        $root = vfsStream::setup('test');
+        vfsStream::setup('test');
         $csvw->setHeaderArray($header)
              ->addLine($line)
              ->setFpn($fpn)
