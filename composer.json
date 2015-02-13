@@ -31,6 +31,8 @@
     "henrikbjorn/phpspec-code-coverage": "1.0.1",
     "mikey179/vfsStream": "1.4.*@dev",
     "phpunit/phpunit": "4.7.*@dev",
-    "phpspec/nyan-formatters": "1.0.1"
+    "phpspec/nyan-formatters": "1.0.1",
+    "humbug/humbug": "1.0.*@dev",
+    "padraic/phpunit-extensions": "1.0.*@dev"
   }
 }
