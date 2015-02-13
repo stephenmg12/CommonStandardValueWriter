@@ -22,15 +22,12 @@
  * @license   http://www.gnu.org/licenses/gpl-2.0.html GNU GPLv2
  * @author    Stephen Gulick <stephenmg12@gmail.com>
  */
-
-
 namespace CommonStandardValueWriterTest\Test;
 
-require_once dirname(dirname(__DIR__)).'/bootstrap.php';
-
+require_once dirname(dirname(__DIR__)) . '/bootstrap.php';
 use CommonStandardValueWriter\CommonStandardValueWriter;
-use org\bovigo\vfs\vfsStream;
 use FilePathNormalizer\FilePathNormalizer;
+use org\bovigo\vfs\vfsStream;
 
 /**
  * Class CommonStandardValueWriterTest
@@ -39,141 +36,148 @@ class CommonStandardValueWriterTest extends \PHPUnit_Framework_TestCase
 {
     public function testAddLine()
     {
-        $line=array('test1','123','test3');
+        $line = ['test1', '123', 'test3'];
         $csvw = new CommonStandardValueWriter();
         $csvw->addLine($line);
         $this->assertEquals("\"test1\",123,\"test3\"\n", $csvw->getCsvRowsAsString());
     }
-
+    public function testAddLineEmpty()
+    {
+        $csvw = new CommonStandardValueWriter();
+        $instance = $csvw->addLine([]);
+        $this->assertEquals('', $csvw->getCsvRowsAsString());
+        $this->assertInstanceOf('CommonStandardValueWriter\CommonStandardValueWriter', $instance);
+    }
     public function testCsvQuoteAllMode()
     {
-        $line=array('test1','123','test3');
+        $line = ['test1', '123', 'test3'];
         $csvw = new CommonStandardValueWriter();
         $csvw->setCsvColumnQuoteMode(CommonStandardValueWriter::QUOTE_ALL);
         $csvw->addLine($line);
         $this->assertEquals("\"test1\",\"123\",\"test3\"\n", $csvw->getCsvRowsAsString());
-        $line = array('test1','test2',array('test3','test4','test5'));
+        $line = ['test1', 'test2', ['test3', 'test4', 'test5']];
         $csvw->addLine($line);
-        $this->assertEquals("\"test1\",\"123\",\"test3\"\n\"test1\",\"test2\",\"test3,test4,test5\"\n", $csvw->getCsvRowsAsString());
+        $this->assertEquals(
+            "\"test1\",\"123\",\"test3\"\n\"test1\",\"test2\",\"test3,test4,test5\"\n",
+            $csvw->getCsvRowsAsString()
+        );
     }
-
-    public function testCsvQuoteStringMode()
-    {
-        $line=array('test1','123','test3');
-        $csvw = new CommonStandardValueWriter();
-        $csvw->setCsvColumnQuoteMode(CommonStandardValueWriter::QUOTE_STRING);
-        $csvw->addLine($line);
-        $this->assertEquals("\"test1\",123,\"test3\"\n", $csvw->getCsvRowsAsString());
-        $line = array('test1','test2',array('test3','test4','test5'));
-        $csvw->addLine($line);
-        $this->assertEquals("\"test1\",123,\"test3\"\n\"test1\",\"test2\",\"test3,test4,test5\"\n", $csvw->getCsvRowsAsString());
-    }
-
     public function testCsvQuoteNoneMode()
     {
-        $line=array('test1','123','test3');
+        $line = ['test1', '123', 'test3'];
         $csvw = new CommonStandardValueWriter();
         $csvw->setCsvColumnQuoteMode(CommonStandardValueWriter::QUOTE_NONE);
         $csvw->addLine($line);
         $this->assertEquals("test1,123,test3\n", $csvw->getCsvRowsAsString());
     }
-
-    public function testAddLineEmpty()
+    public function testCsvQuoteStringMode()
+    {
+        $line = ['test1', '123', 'test3'];
+        $csvw = new CommonStandardValueWriter();
+        $csvw->setCsvColumnQuoteMode(CommonStandardValueWriter::QUOTE_STRING);
+        $csvw->addLine($line);
+        $this->assertEquals("\"test1\",123,\"test3\"\n", $csvw->getCsvRowsAsString());
+        $line = ['test1', 'test2', ['test3', 'test4', 'test5']];
+        $csvw->addLine($line);
+        $this->assertEquals(
+            "\"test1\",123,\"test3\"\n\"test1\",\"test2\",\"test3,test4,test5\"\n",
+            $csvw->getCsvRowsAsString()
+        );
+    }
+    public function testHeaderQuoteAll()
     {
         $csvw = new CommonStandardValueWriter();
-        $instance = $csvw->addLine(array());
-        $this->assertEquals('', $csvw->getCsvRowsAsString());
-        $this->assertInstanceOf('CommonStandardValueWriter\CommonStandardValueWriter', $instance );
+        $csvw->setHeaderQuoteMode(CommonStandardValueWriter::QUOTE_ALL);
+        $header = ['test1', '123', 'test3'];
+        $csvw->setHeaderArray($header);
+        $this->assertEquals("\"test1\",\"123\",\"test3\"\n", $csvw->getCsvHeader());
     }
-
-    public function testsetCsvDelimiterAndSetCsvEOL()
+    public function testHeaderQuoteNone()
     {
-        $line=array('test1','123','test3');
         $csvw = new CommonStandardValueWriter();
-        $csvw->addLine(array())->setCsvDelimiter("\t")->setCsvEOL("\r\n")->addLine($line);
-        $this->assertEquals("\"test1\"\t123\t\"test3\"\r\n", $csvw->getCsvRowsAsString());
+        $csvw->setHeaderQuoteMode(CommonStandardValueWriter::QUOTE_NONE);
+        $header = ['test1', 'test2', 'test3'];
+        $csvw->setHeaderArray($header);
+        $this->assertEquals("test1,test2,test3\n", $csvw->getCsvHeader());
     }
-
-    public function testsetCsvQuote()
-    {
-        $line=array('test1','123','test3');
-        $csvw = new CommonStandardValueWriter();
-        $csvw->addLine(array())->setCsvQuote("'")->addLine($line);
-        $this->assertEquals("'test1',123,'test3'\n", $csvw->getCsvRowsAsString());
-    }
-
     public function testMultipleHaderLinesThrowsDomainException()
     {
         $this->setExpectedException('DomainException', 'Header can only be one row but contained more');
         $csvw = new CommonStandardValueWriter();
         $csvw->setHeaderQuoteMode(CommonStandardValueWriter::QUOTE_ALL);
-        $header=array(array('test1','123','test3'),array('test4','test5','test6'));
+        $header = [['test1', '123', 'test3'], ['test4', 'test5', 'test6']];
         $csvw->setHeaderArray($header);
     }
-
-    public function testHeaderQuoteAll()
-    {
-        $csvw = new CommonStandardValueWriter();
-        $csvw->setHeaderQuoteMode(CommonStandardValueWriter::QUOTE_ALL);
-        $header=array('test1','123','test3');
-        $csvw->setHeaderArray($header);
-        $this->assertEquals("\"test1\",\"123\",\"test3\"\n", $csvw->getCsvHeader());
-    }
-
-    public function testHeaderQuoteNone()
-    {
-        $csvw = new CommonStandardValueWriter();
-        $csvw->setHeaderQuoteMode(CommonStandardValueWriter::QUOTE_NONE);
-        $header=array('test1','test2','test3');
-        $csvw->setHeaderArray($header);
-        $this->assertEquals("test1,test2,test3\n", $csvw->getCsvHeader());
-    }
-
     public function testSetHeader()
     {
-        $header=array('test1','test2','test3');
+        $header = ['test1', 'test2', 'test3'];
         $csvw = new CommonStandardValueWriter();
         $this->assertEquals('', $csvw->getCsvHeader());
         $csvw->setHeaderArray($header);
         $this->assertEquals("\"test1\",\"test2\",\"test3\"\n", $csvw->getCsvHeader());
     }
-
     public function testSetQuoteEscapeMode()
     {
-        $line = array('test1','"test two"','test3');
+        $line = ['test1', '"test two"', 'test3'];
         $csvw = new CommonStandardValueWriter();
-        $csvw->setQuoteEscapeMode(CommonStandardValueWriter::ESCAPE_DOUBLE)->addLine($line);
+        $csvw->setQuoteEscapeMode(CommonStandardValueWriter::ESCAPE_DOUBLE)
+             ->addLine($line);
         $this->assertEquals("\"test1\",\"\"\"test two\"\"\",\"test3\"\n", $csvw->getCsvRowsAsString());
         $csvw->setQuoteEscapeMode(CommonStandardValueWriter::ESCAPE_BSLASH);
         $this->assertEquals("\"test1\",\"\\\"test two\\\"\",\"test3\"\n", $csvw->getCsvRowsAsString());
         $csvw->setQuoteEscapeMode(CommonStandardValueWriter::ESCAPE_NONE);
         $this->assertEquals("\"test1\",\"\"test two\"\",\"test3\"\n", $csvw->getCsvRowsAsString());
     }
-
     public function testSetQuoteEscapeModeException()
     {
-        $this->setExpectedException('InvalidArgumentException', 'Quote escape mode must be back_slash, double, or none given error');
+        $this->setExpectedException(
+            'InvalidArgumentException',
+            'Quote escape mode must be back_slash, double, or none given error'
+        );
         $csvw = new CommonStandardValueWriter();
         $csvw->setQuoteEscapeMode('error');
     }
-
     public function testValidateQuoteModeException()
     {
-        $this->setExpectedException('DomainException', 'Valid quote options are quote_all, quote_none, or quote_string');
+        $this->setExpectedException(
+            'DomainException',
+            'Valid quote options are quote_all, quote_none, or quote_string'
+        );
         $csvw = new CommonStandardValueWriter();
         $csvw->setCsvColumnQuoteMode('error');
     }
-
     public function testWriteToFile()
     {
         $fpn = new FilePathNormalizer();
         $csvw = new CommonStandardValueWriter();
-        $header = array('header1', 'header2', 'header3');
-        $line = array('test1', '123', 'test3');
+        $header = ['header1', 'header2', 'header3'];
+        $line = ['test1', '123', 'test3'];
         $root = vfsStream::setup('test');
-        $csvw->setHeaderArray($header)->addLine($line)->setFpn($fpn)->writeToFile('vfs://test/test.csv');
+        $csvw->setHeaderArray($header)
+             ->addLine($line)
+             ->setFpn($fpn)
+             ->writeToFile('vfs://test/test.csv');
         $actual = file_get_contents('vfs://test/test.csv');
         $expected = $csvw->__toString();
         $this->assertEquals($expected, $actual);
+    }
+    public function testsetCsvDelimiterAndSetCsvEOL()
+    {
+        $line = ['test1', '123', 'test3'];
+        $csvw = new CommonStandardValueWriter();
+        $csvw->addLine([])
+             ->setCsvDelimiter("\t")
+             ->setCsvEOL("\r\n")
+             ->addLine($line);
+        $this->assertEquals("\"test1\"\t123\t\"test3\"\r\n", $csvw->getCsvRowsAsString());
+    }
+    public function testsetCsvQuote()
+    {
+        $line = ['test1', '123', 'test3'];
+        $csvw = new CommonStandardValueWriter();
+        $csvw->addLine([])
+             ->setCsvQuote("'")
+             ->addLine($line);
+        $this->assertEquals("'test1',123,'test3'\n", $csvw->getCsvRowsAsString());
     }
 }
