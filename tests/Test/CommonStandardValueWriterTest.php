@@ -100,7 +100,7 @@ class CommonStandardValueWriterTest extends \PHPUnit_Framework_TestCase
         $csvw->setHeaderArray($header);
         $this->assertEquals("test1,test2,test3\n", $csvw->getCsvHeader());
     }
-    public function testMultipleHaderLinesThrowsDomainException()
+    public function testMultipleHeaderLinesThrowsDomainException()
     {
         $this->setExpectedException('DomainException', 'Header can only be one row but contained more');
         $csvw = new CommonStandardValueWriter();
@@ -161,7 +161,7 @@ class CommonStandardValueWriterTest extends \PHPUnit_Framework_TestCase
         $expected = $csvw->__toString();
         $this->assertEquals($expected, $actual);
     }
-    public function testsetCsvDelimiterAndSetCsvEOL()
+    public function testSetCsvDelimiterAndSetCsvEOL()
     {
         $line = ['test1', '123', 'test3'];
         $csvw = new CommonStandardValueWriter();
@@ -171,7 +171,7 @@ class CommonStandardValueWriterTest extends \PHPUnit_Framework_TestCase
              ->addLine($line);
         $this->assertEquals("\"test1\"\t123\t\"test3\"\r\n", $csvw->getCsvRowsAsString());
     }
-    public function testsetCsvQuote()
+    public function testSetCsvQuote()
     {
         $line = ['test1', '123', 'test3'];
         $csvw = new CommonStandardValueWriter();
