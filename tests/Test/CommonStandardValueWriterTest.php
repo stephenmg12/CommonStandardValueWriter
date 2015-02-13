@@ -161,7 +161,7 @@ class CommonStandardValueWriterTest extends \PHPUnit_Framework_TestCase
         $expected = $csvw->__toString();
         $this->assertEquals($expected, $actual);
     }
-    public function testsetCsvDelimiterAndSetCsvEOL()
+    public function testSetCsvDelimiterAndSetCsvEOL()
     {
         $line = ['test1', '123', 'test3'];
         $csvw = new CommonStandardValueWriter();
@@ -171,7 +171,7 @@ class CommonStandardValueWriterTest extends \PHPUnit_Framework_TestCase
              ->addLine($line);
         $this->assertEquals("\"test1\"\t123\t\"test3\"\r\n", $csvw->getCsvRowsAsString());
     }
-    public function testsetCsvQuote()
+    public function testSetCsvQuote()
     {
         $line = ['test1', '123', 'test3'];
         $csvw = new CommonStandardValueWriter();
@@ -180,4 +180,68 @@ class CommonStandardValueWriterTest extends \PHPUnit_Framework_TestCase
              ->addLine($line);
         $this->assertEquals("'test1',123,'test3'\n", $csvw->getCsvRowsAsString());
     }
+
+    public function testFluidInterface()
+    {
+        $header = ['header1', 'header2', 'header3'];
+        $line =  ['test1', '2', 'test3'];
+        $csvw = new CommonStandardValueWriter();
+        $test = $csvw->setHeaderArray($header);
+        $this->assertInstanceOf('CommonStandardValueWriter\CommonStandardValueWriter', $test, 'Fluid Interface setHeaderArray');
+        $test = $csvw->addLine($line);
+        $this->assertInstanceOf('CommonStandardValueWriter\CommonStandardValueWriter', $test, 'Fluid Interface addLine');
+        $test = $csvw->setCsvDelimiter("\t");
+        $this->assertInstanceOf('CommonStandardValueWriter\CommonStandardValueWriter', $test, 'Fluid Interface setCsvDelimiter');
+        $test = $csvw->setCsvEOL("\r\n");
+        $this->assertInstanceOf('CommonStandardValueWriter\CommonStandardValueWriter', $test, 'Fluid Interface setCsvEOL');
+        $test = $csvw->setCsvQuote('\'');
+        $this->assertInstanceOf('CommonStandardValueWriter\CommonStandardValueWriter', $test, 'Fluid Interface setCsvQuote');
+        $test = $csvw->setFpn();
+        $this->assertInstanceOf('CommonStandardValueWriter\CommonStandardValueWriter', $test, 'Fluid Interface setFpn');
+        $test = $csvw->setQuoteEscapeMode(CommonStandardValueWriter::ESCAPE_BSLASH);
+        $this->assertInstanceOf('CommonStandardValueWriter\CommonStandardValueWriter', $test, 'Fluid Interface setQuoteEscapeMode');
+        $test = $csvw->setCsvColumnQuoteMode(CommonStandardValueWriter::QUOTE_ALL);
+        $this->assertInstanceOf('CommonStandardValueWriter\CommonStandardValueWriter', $test, 'Fluid Interface setColumnQuoteMode');
+        vfsStream::setup('test');
+        $test = $csvw->writeToFile('vfs://test/test.csv');
+        $this->assertInstanceOf('CommonStandardValueWriter\CommonStandardValueWriter', $test, 'Fluid Interface writeToFile');
+    }
+
+    public function testSetFpn()
+    {
+        $class = new \ReflectionClass('CommonStandardValueWriter\CommonStandardValueWriter');
+        $getFpn = $class->getMethod('getFpn');
+        $getFpn->setAccessible(true);
+        $csvw = new CommonStandardValueWriter();
+        $csvw->setFpn(new FilePathNormalizer());
+        $this->assertInstanceOf('FilePathNormalizer\FilePathNormalizer', $getFpn->invoke($csvw));
+    }
+
+    public function testGetCsvHeaderString()
+    {
+        $csvw = new CommonStandardValueWriter();
+        $this->assertInternalType('string', $csvw->getCsvHeader());
+    }
+
+    public function testGetCsvRowAsString()
+    {
+        $csvw = new CommonStandardValueWriter();
+        $this->assertInternalType('string', $csvw->getCsvRowsAsString());
+    }
+
+    public function testsetCsvWriteMethod()
+    {
+        $header=['header1','header2','header3'];
+        $line = ['test1','test2','test3'];
+        $content = "\"header4\",\"header5\",\"header6\"\n";
+        vfsStream::setup('test');
+        vfsStream::newFile('test.csv')->withContent($content);
+        $csvw = new CommonStandardValueWriter();
+        $csvw->setCsvWriteMethod(CommonStandardValueWriter::WRITE_APPEND)->setHeaderArray($header)->addLine($line)->writeToFile('vfs://test/test.csv');
+        $actual = file_get_contents('vfs://test/test.csv');
+        $expected = $content.$csvw->__toString();
+        $this->assertEquals($expected, $actual);
+    }
+
+
 }
