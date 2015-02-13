@@ -46,6 +46,13 @@ class CommonStandardValueWriter
     const ESCAPE_DOUBLE = 'double';
     const ESCAPE_BSLASH = 'back_slash';
     const ESCAPE_NONE = 'none';
+
+    /**
+     * Used to set Write Method in setWriteMethod
+     */
+    const WRITE_APPEND = 'append';
+    const WRITE_TRUNCATE = 'truncate';
+
     /**
      * @param FilePathNormalizer $fpn
      */
@@ -111,11 +118,10 @@ class CommonStandardValueWriter
         }
         return $result;
     }
+
     /**
      * @param string $value
-     *
-     * @return CommonStandardValueWriter
-     * @throws \DomainException
+     * @return $this
      */
     public function setCsvColumnQuoteMode($value = self::QUOTE_STRING)
     {
@@ -146,31 +152,38 @@ class CommonStandardValueWriter
     /**
      * @param string $value
      *
-     * @return self
+     * @return $this
      */
     public function setCsvQuote($value = '"')
     {
         $this->csvQuote = (string)$value;
         return $this;
     }
+
     /**
      * @param string $value
      *
+     * @return $this
      * @throws \DomainException
      */
-    public function setCsvWriteMethod($value = 'append')
+    public function setCsvWriteMethod($value = self::WRITE_APPEND)
     {
+        if($value !== self::WRITE_APPEND || $value !== self::WRITE_TRUNCATE) {
+            $mess = 'csvWriteMethod must be either CommonStandardValueWriter::WRITE_APPEND or CommonStandardValueWriter::WRITE_TRUNCATE';
+            throw new \DomainException($mess);
+        }
         $this->csvWriteMethod = $value;
+        return $this;
     }
+
     /**
      * @param FilePathNormalizer $value
-     *
-     * @return self
+     * @return $this
      */
     public function setFpn($value = null)
     {
         if (null === $value) {
-            $this->fpn = new FilePathNormalizer();
+            $value = new FilePathNormalizer();
         }
         $this->fpn = $value;
         return $this;
@@ -231,7 +244,7 @@ class CommonStandardValueWriter
         $file =
             $this->getFpn()
                  ->normalizeFile((string)$file);
-        $fileHandle = 'append' === $this->csvWriteMethod ? fopen($file, 'ab') : fopen($file, 'cb');
+        $fileHandle = self::WRITE_APPEND === $this->csvWriteMethod ? fopen($file, 'ab') : fopen($file, 'cb');
         $tries = 0;
         //Give 10 secs to try getting lock.
         $timeout = time() + 10;
