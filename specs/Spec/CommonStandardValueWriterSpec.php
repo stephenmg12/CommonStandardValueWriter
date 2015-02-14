@@ -10,6 +10,9 @@ use Prophecy\Argument;
  * Class CommonStandardValueWriterSpec
  *
  * @mixin \CommonStandardValueWriter\CommonStandardValueWriter
+ *
+ * @method $this __toString()
+ * @method void shouldReturn()
  */
 class CommonStandardValueWriterSpec extends ObjectBehavior
 {
