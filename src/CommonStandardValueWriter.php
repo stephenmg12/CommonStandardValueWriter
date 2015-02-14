@@ -251,6 +251,17 @@ class CommonStandardValueWriter
         if(self::WRITE_APPEND === $this->csvWriteMethod && filesize($file)>5) {
             $csv = $this->getCsvRowsAsString();
         }
+        $this->write($csv, $fileHandle, $file);
+        return $this;
+    }
+    /**
+     * @param $csv
+     * @param $fileHandle
+     * @param $file
+     * @return bool
+     */
+    protected function write($csv, $fileHandle, $file)
+    {
         $tries = 0;
         //Give a minute to try writing file.
         $timeout = time() + 60;
@@ -270,9 +281,13 @@ class CommonStandardValueWriter
             }
             $csv = substr($csv, $written);
         }
-        return $this;
+        return true;
     }
-
+    /**
+     * @param $fileHandle
+     * @param $file
+     * @return bool
+     */
     protected function getFileLock($fileHandle, $file){
         $tries = 0;
         //Give 10 secs to try getting lock.
