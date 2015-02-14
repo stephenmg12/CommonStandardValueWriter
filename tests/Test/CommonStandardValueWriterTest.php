@@ -277,7 +277,7 @@ class CommonStandardValueWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertInternalType('string', $csvw->getCsvRowsAsString());
     }
 
-    public function testsetCsvWriteMethod()
+    public function testsetCsvWriteMethodAppend()
     {
         $header=['header1','header2','header3'];
         $line = ['test1','test2','test3'];
@@ -287,7 +287,7 @@ class CommonStandardValueWriterTest extends \PHPUnit_Framework_TestCase
         $csvw = new CommonStandardValueWriter();
         $csvw->setCsvWriteMethod(CommonStandardValueWriter::WRITE_APPEND)->setHeaderArray($header)->addLine($line)->writeToFile('vfs://test/test.csv');
         $actual = file_get_contents(vfsStream::url('test/test.csv'));
-        $expected = $content.$csvw->__toString();
+        $expected = $content.$csvw->getCsvRowsAsString();
         $this->assertEquals($expected, $actual);
     }
 

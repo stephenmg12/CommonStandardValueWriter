@@ -258,6 +258,10 @@ class CommonStandardValueWriter
             usleep(rand(100000, 500000));
         }
         $csv = $this->__toString();
+        clearstatcache(false, $file);
+        if(self::WRITE_APPEND === $this->csvWriteMethod && filesize($file)>5) {
+            $csv = $this->getCsvRowsAsString();
+        }
         $tries = 0;
         //Give a minute to try writing file.
         $timeout = time() + 60;
