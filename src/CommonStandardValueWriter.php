@@ -245,18 +245,7 @@ class CommonStandardValueWriter
             $this->getFpn()
                  ->normalizeFile((string)$file);
         $fileHandle = self::WRITE_APPEND === $this->csvWriteMethod ? fopen($file, 'ab') : fopen($file, 'cb');
-        $tries = 0;
-        //Give 10 secs to try getting lock.
-        $timeout = time() + 10;
-        while (!flock($fileHandle, LOCK_EX | LOCK_NB)) {
-            if (10 < ++$tries || $timeout < time()) {
-                fclose($fileHandle);
-                $mess = 'Giving up could not get flock on ' . $file;
-                throw new \LengthException($mess);
-            }
-            // Wait 0.1 to 0.5 seconds before trying again.
-            usleep(rand(100000, 500000));
-        }
+        $this->getFileLock($fileHandle, $file);
         $csv = $this->__toString();
         clearstatcache(false, $file);
         if(self::WRITE_APPEND === $this->csvWriteMethod && filesize($file)>5) {
@@ -282,6 +271,22 @@ class CommonStandardValueWriter
             $csv = substr($csv, $written);
         }
         return $this;
+    }
+
+    protected function getFileLock($fileHandle, $file){
+        $tries = 0;
+        //Give 10 secs to try getting lock.
+        $timeout = time() + 10;
+        while (!flock($fileHandle, LOCK_EX | LOCK_NB)) {
+            if (10 < ++$tries || $timeout < time()) {
+                fclose($fileHandle);
+                $mess = 'Giving up could not get flock on ' . $file;
+                throw new \LengthException($mess);
+            }
+            // Wait 0.1 to 0.5 seconds before trying again.
+            usleep(rand(100000, 500000));
+        }
+        return true;
     }
     /**
      * @param $string
