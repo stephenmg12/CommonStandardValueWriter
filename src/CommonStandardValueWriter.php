@@ -246,22 +246,32 @@ class CommonStandardValueWriter
                  ->normalizeFile((string)$file);
         $fileHandle = self::WRITE_APPEND === $this->csvWriteMethod ? fopen($file, 'ab') : fopen($file, 'cb');
         $this->getFileLock($fileHandle, $file);
+
+        $this->write($fileHandle, $file);
+        return $this;
+    }
+
+    /**
+     * @param $file
+     * @return string
+     */
+    protected function getCsvString($file)
+    {
         $csv = $this->__toString();
         clearstatcache(false, $file);
         if(self::WRITE_APPEND === $this->csvWriteMethod && filesize($file)>5) {
             $csv = $this->getCsvRowsAsString();
         }
-        $this->write($csv, $fileHandle, $file);
-        return $this;
+        return $csv;
     }
     /**
-     * @param $csv
      * @param $fileHandle
      * @param $file
      * @return bool
      */
-    protected function write($csv, $fileHandle, $file)
+    protected function write($fileHandle, $file)
     {
+        $csv = $this->getCsvString($file);
         $tries = 0;
         //Give a minute to try writing file.
         $timeout = time() + 60;
@@ -271,7 +281,7 @@ class CommonStandardValueWriter
                     flock($fileHandle, LOCK_UN);
                     fclose($fileHandle);
                 }
-                $mess = 'Giving up could not finish writing ' . $file;
+                $mess = 'Giving up could not finish writing '. $file;
                 throw new \LengthException($mess);
             }
             $written = fwrite($fileHandle, $csv);
@@ -283,19 +293,19 @@ class CommonStandardValueWriter
         }
         return true;
     }
+
     /**
      * @param $fileHandle
-     * @param $file
      * @return bool
      */
-    protected function getFileLock($fileHandle, $file){
+    protected function getFileLock($fileHandle){
         $tries = 0;
         //Give 10 secs to try getting lock.
         $timeout = time() + 10;
         while (!flock($fileHandle, LOCK_EX | LOCK_NB)) {
             if (10 < ++$tries || $timeout < time()) {
                 fclose($fileHandle);
-                $mess = 'Giving up could not get flock on ' . $file;
+                $mess = 'Giving up could not get flock';
                 throw new \LengthException($mess);
             }
             // Wait 0.1 to 0.5 seconds before trying again.
