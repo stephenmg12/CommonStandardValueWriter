@@ -245,7 +245,7 @@ class CommonStandardValueWriter
             $this->getFpn()
                  ->normalizeFile((string)$file);
         $fileHandle = self::WRITE_APPEND === $this->csvWriteMethod ? fopen($file, 'ab') : fopen($file, 'cb');
-        $this->getFileLock($fileHandle, $file);
+        $this->getFileLock($fileHandle);
 
         $this->write($fileHandle, $file);
         return $this;
