@@ -52,7 +52,7 @@ class CommonStandardValueWriter
     const WRITE_APPEND = 'append';
     const WRITE_TRUNCATE = 'truncate';
     /**
-     * @param FilePathNormalizer $fpn
+     * @param FilePathNormalizer|null $fpn
      */
     public function __construct(FilePathNormalizer $fpn = null)
     {
@@ -176,7 +176,7 @@ class CommonStandardValueWriter
         return $this;
     }
     /**
-     * @param FilePathNormalizer $value
+     * @param FilePathNormalizer|null $value
      *
      * @return $this
      */
