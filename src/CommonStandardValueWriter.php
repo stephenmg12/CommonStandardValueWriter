@@ -244,74 +244,23 @@ class CommonStandardValueWriter
         $file =
             $this->getFpn()
                  ->normalizeFile((string)$file);
-        $fileHandle = self::WRITE_APPEND === $this->csvWriteMethod ? fopen($file, 'ab') : fopen($file, 'cb');
-        $this->getFileLock($fileHandle);
-
-        $this->write($fileHandle, $file);
-        return $this;
-    }
-
-    /**
-     * @param $file
-     * @return string
-     */
-    protected function getCsvString($file)
-    {
-        $csv = $this->__toString();
+        $mode = self::WRITE_APPEND === $this->csvWriteMethod ? 'ab' : 'cb';
         clearstatcache(false, $file);
-        if(self::WRITE_APPEND === $this->csvWriteMethod && filesize($file)>5) {
-            $csv = $this->getCsvRowsAsString();
+        if (!is_file($file) || 5 > filesize($file)) {
+            $mode = 'cb';
         }
-        return $csv;
-    }
-    /**
-     * @param $fileHandle
-     * @param $file
-     * @return bool
-     */
-    protected function write($fileHandle, $file)
-    {
-        $csv = $this->getCsvString($file);
-        $tries = 0;
-        //Give a minute to try writing file.
-        $timeout = time() + 60;
-        while (strlen($csv)) {
-            if (10 < ++$tries || $timeout < time()) {
-                if (is_resource($fileHandle)) {
-                    flock($fileHandle, LOCK_UN);
-                    fclose($fileHandle);
-                }
-                $mess = 'Giving up could not finish writing '. $file;
-                throw new \LengthException($mess);
-            }
-            $written = fwrite($fileHandle, $csv);
-            // Decrease $tries while making progress but NEVER $tries < 1.
-            if ($written > 0 && $tries > 0) {
-                --$tries;
-            }
-            $csv = substr($csv, $written);
+        $fileHandle = fopen($file, $mode);
+        $this->getFileLock($fileHandle);
+        if ('cb' === $mode) {
+            $this->write($fileHandle, $this->__toString());
+        } else {
+            $this->write($fileHandle, $this->getCsvRowsAsString());
         }
-        return true;
-    }
-
-    /**
-     * @param $fileHandle
-     * @return bool
-     */
-    protected function getFileLock($fileHandle){
-        $tries = 0;
-        //Give 10 secs to try getting lock.
-        $timeout = time() + 10;
-        while (!flock($fileHandle, LOCK_EX | LOCK_NB)) {
-            if (10 < ++$tries || $timeout < time()) {
-                fclose($fileHandle);
-                $mess = 'Giving up could not get flock';
-                throw new \LengthException($mess);
-            }
-            // Wait 0.1 to 0.5 seconds before trying again.
-            usleep(rand(100000, 500000));
+        if (is_resource($fileHandle)) {
+            flock($fileHandle, LOCK_UN);
+            fclose($fileHandle);
         }
-        return true;
+        return $this;
     }
     /**
      * @param $string
@@ -327,6 +276,28 @@ class CommonStandardValueWriter
             return str_replace($this->csvQuote, '\\' . $this->csvQuote, (string)$string);
         }
         return $string;
+    }
+    /**
+     * @param $fileHandle
+     *
+     * @return bool
+     * @throws \LengthException
+     */
+    protected function getFileLock($fileHandle)
+    {
+        $tries = 0;
+        //Give 10 secs to try getting lock.
+        $timeout = time() + 10;
+        while (!flock($fileHandle, LOCK_EX | LOCK_NB)) {
+            if (10 < ++$tries || $timeout < time()) {
+                fclose($fileHandle);
+                $mess = 'Giving up could not get flock';
+                throw new \LengthException($mess);
+            }
+            // Wait 0.1 to 0.5 seconds before trying again.
+            usleep(rand(100000, 500000));
+        }
+        return true;
     }
     /**
      * @return FilePathNormalizer
@@ -383,6 +354,36 @@ class CommonStandardValueWriter
                 'Valid quote options are quote_all, quote_none, or quote_string'
             );
         }
+    }
+    /**
+     * @param $fileHandle
+     * @param $data
+     *
+     * @return bool
+     * @throws \LengthException
+     */
+    protected function write($fileHandle, $data)
+    {
+        $tries = 0;
+        //Give a minute to try writing file.
+        $timeout = time() + 60;
+        while (strlen($data)) {
+            if (10 < ++$tries || $timeout < time()) {
+                if (is_resource($fileHandle)) {
+                    flock($fileHandle, LOCK_UN);
+                    fclose($fileHandle);
+                }
+                $mess = 'Giving up could not finish writing csv file';
+                throw new \LengthException($mess);
+            }
+            $written = fwrite($fileHandle, $data);
+            // Decrease $tries while making progress but NEVER $tries < 1.
+            if (0 < $written && 0 < $tries) {
+                --$tries;
+            }
+            $data = substr($data, $written);
+        }
+        return true;
     }
     /**
      * @var array $csvArray
